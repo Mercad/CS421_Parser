@@ -1,8 +1,8 @@
 #include "scanner.h"
 #include <iostream>
 #include <vector>
+#include <map>
 using namespace std;
-
 
 /***********************************************************************
  * Parse
@@ -73,17 +73,38 @@ bool IsTense(tokentype type)
 }
 
 Scanner scanner;
-//tokentype type;
+map<string, tokentype> lexicon;
+
+//
 
 
 int main()
 {
+	fstream file;
+	string input;
+	string strType;
+	tokentype type;
+
+	file.open("reservedWords.txt");//Opens the file
+	if (file.is_open())//If the file is open
+	{
+		while (!file.eof())//While the file is not empty
+		{
+			file >> input;//Reads the string
+			file >> strType;//Read the type
+			type = scanner.StrToTokentype(strType);
+			lexicon.insert(pair<string, tokentype> (input, type));
+		}
+	}
+	file.close();//Closes the input file
+	file.clear();
+
 	//tokentype type = VERBPASTNEG;
 	//int index = 0;
 	//bool (*compFunc)(tokentype) = &IsTense;
 
 	//array of function pointers
-	bool (*compFunc[3])(tokentype) = {&IsNoun, &IsPeriod, &IsNoun};
+	bool (*compFunc[3])(tokentype) = {&IsNoun, &IsPeriod, &IsVerb};
 
 	//example string list to test
 	vector<string> testList;
@@ -106,11 +127,27 @@ int main()
 
 	cout << "Expected test: " << good2go;
 	bool g2g2 = Expected(&IsNoun, "rika");
-	cout << "\ng2g2: " << g2g2;
-	//cout << "Sizeof compfunc: " << sizeof(compFunc)/sizeof(compFunc[0]);
+	cout << "\nExpected test 2: " << g2g2;
+
+	/*Outputting the entire lexicon
+	cout << "\nLexicon: " << endl;
+	for (map<string, tokentype>::iterator iter = lexicon.begin(); iter != lexicon.end(); ++iter)
+	{
+		cout << iter->first << " " << scanner.TokenTypeStr(iter->second) << endl;
+	}
 	return 0;
+	*/
 }
 
+/*
+ * s1 ::= [CONNECTOR] <noun> SUBJECT (<s2> | <s3>)
+ * s2 ::= <verb> <tense> <s7>
+ * s3 ::= <noun> (<s4> | <s5> | <s6>)
+ * s4 ::= <be> <s7>
+ * s5 ::= DESTINATION <s2>
+ * s6 ::= OBJECT (<s2> | <noun> <s5>)
+ * s7 ::= PERIOD [s1]
+ */
 bool Parse(vector<string> parseList)
 {
 	//expresses whether or not you have a sentence
@@ -129,19 +166,20 @@ bool Parse(vector<string> parseList)
 
 	do
 	{
-
 		//s1
-
-
-		bool (*compFunc[3])(tokentype) = {&IsConnector, &IsNoun, &IsSubject};
-		if(parseList.size() < 3)
+		//optional connector
+		if(Expected(&IsConnector, parseList[index]))
 		{
-			isPart = false;
+			index++;
 		}
-		while(isPart && index < 3)
+		//check the noun
+		bool (*compFunc[2])(tokentype) = {&IsNoun, &IsSubject};
+		vector<string> sublist(parseList.begin() + index, parseList.begin() + sizeof(compFunc)/sizeof(compFunc[0]) );
+		if(Expected(compFunc, sublist));
 		{
-			isPart = Match(compFunc[index], type);
+			index += sizeof(compFunc)/sizeof(compFunc[0]);
 		}
+
 
 		if(index + 1 < (signed)parseList.size() && IsVerb(type))
 		{
@@ -198,6 +236,8 @@ bool Expected(bool (*compFunc[])(tokentype), vector<string> sublist)
 	//Scanner scanner;
 	bool valid = true;
 	tokentype type;
+	map<string, tokentype>::iterator iter;
+
 	//if the size of lists do not match
 	if( sublist.size() < ( sizeof(compFunc)/sizeof(compFunc[0]) ) )
 	{
@@ -207,13 +247,21 @@ bool Expected(bool (*compFunc[])(tokentype), vector<string> sublist)
 	int index = 0;
 	while(valid && index < (signed)sublist.size())
 	{
-		//TODO if the word is not in the lexeme
-		//call the scanner and if its a valid word put it in the lexeme
-		type = scanner.Scan(sublist[index]);
-
-		//get the type
-
-		//try and fit the type into a valid sentence
+		//TODO modularize this
+		iter = lexicon.find(sublist[index]);
+		//if the word is not in the lexicon
+		if (iter == lexicon.end())
+		{
+			//call the scanner for its type
+			type = scanner.Scan(sublist[index]);
+			//insert it into the lexicon
+			lexicon.insert(pair<string, tokentype> (sublist[index], type));
+		}
+		//already inserted into lexicon look up its type
+		else
+		{
+			type = iter->second;
+		}
 
 		//match expected results
 		valid = Match(compFunc[index], type);
