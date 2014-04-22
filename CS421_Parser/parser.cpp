@@ -4,6 +4,10 @@
 #include <map>
 using namespace std;
 
+Scanner scanner;
+map<string, tokentype> symbolTable;
+typedef bool (*fptr)(tokentype);
+
 /***********************************************************************
  * Parse
  * ------------------------------------
@@ -12,8 +16,9 @@ using namespace std;
  ***********************************************************************/
 bool Parse(vector<string> parseList);
 
-bool Expected(bool (*compFunc[])(tokentype), vector<string> sublist);
-bool Expected(bool (*compFunc)(tokentype), string compStr);
+bool Expected(bool(*compFunc[])(tokentype), vector<string> sublist);
+bool Expected(bool(*compFunc)(tokentype), string compStr);
+bool Expected(vector<fptr> compFunc, vector<string> sublist);
 
 /***********************************************************************
  * Match
@@ -21,7 +26,7 @@ bool Expected(bool (*compFunc)(tokentype), string compStr);
  * @param compFunc(tokentype) - Allows us to pass a comparator function
  * @param type - tokentype we want to compare
  ***********************************************************************/
-bool Match(bool (*compFunc)(tokentype), tokentype type)
+bool Match(bool(*compFunc)(tokentype), tokentype type)
 {
 	return compFunc(type);
 }
@@ -72,19 +77,15 @@ bool IsTense(tokentype type)
 			== VERBNEG);
 }
 
-Scanner scanner;
-map<string, tokentype> lexicon;
 
-//
 
 
 int main()
 {
-	fstream file;
 	string input;
 	string strType;
 	tokentype type;
-
+	fstream file;
 	file.open("reservedWords.txt");//Opens the file
 	if (file.is_open())//If the file is open
 	{
@@ -93,18 +94,19 @@ int main()
 			file >> input;//Reads the string
 			file >> strType;//Read the type
 			type = scanner.StrToTokentype(strType);
-			lexicon.insert(pair<string, tokentype> (input, type));
+			symbolTable.insert(pair<string, tokentype> (input, type));
 		}
 	}
 	file.close();//Closes the input file
 	file.clear();
-
 	//tokentype type = VERBPASTNEG;
 	//int index = 0;
 	//bool (*compFunc)(tokentype) = &IsTense;
 
 	//array of function pointers
-	bool (*compFunc[3])(tokentype) = {&IsNoun, &IsPeriod, &IsVerb};
+	fptr compFuncTest[3] = {&IsNoun, &IsPeriod, &IsVerb};
+	vector<fptr> compFunc (compFuncTest, compFuncTest + sizeof(compFuncTest)/sizeof(compFuncTest[0]));
+
 
 	//example string list to test
 	vector<string> testList;
@@ -128,15 +130,6 @@ int main()
 	cout << "Expected test: " << good2go;
 	bool g2g2 = Expected(&IsNoun, "rika");
 	cout << "\nExpected test 2: " << g2g2;
-
-	/*Outputting the entire lexicon
-	cout << "\nLexicon: " << endl;
-	for (map<string, tokentype>::iterator iter = lexicon.begin(); iter != lexicon.end(); ++iter)
-	{
-		cout << iter->first << " " << scanner.TokenTypeStr(iter->second) << endl;
-	}
-	return 0;
-	*/
 }
 
 /*
@@ -159,35 +152,78 @@ bool Parse(vector<string> parseList)
 	//int state = 0;
 	tokentype type;
 
-	if(parseList.empty())
+	/*
+	//vector<(*rule[])(tokentype)> ruleList;
+	bool (*rule1[3])(tokentype) = {&IsVerb, &IsTense, &IsPeriod};
+	bool (*rule2[3])(tokentype) = {&IsNoun, &IsBe, &IsPeriod};
+	bool (*rule3[5])(tokentype) = {&IsNoun, &IsDestination, &IsVerb, &IsTense, &IsPeriod};
+	bool (*rule4[5])(tokentype) = {&IsNoun, &IsObject, &IsVerb, &IsTense, &IsPeriod};
+	bool (*rule5[7])(tokentype) = {&IsNoun, &IsObject, &IsNoun, &IsDestination, &IsVerb, &IsTense, &IsPeriod};
+*/
+
+	if (parseList.empty())
 	{
 		return false;
 	}
 
+	vector<string> sublist;
 	do
 	{
+
 		//s1
-		//optional connector
-		if(Expected(&IsConnector, parseList[index]))
+		if (isPart && index + 3 < (signed) parseList.size())
 		{
-			index++;
-		}
-		//check the noun
-		bool (*compFunc[2])(tokentype) = {&IsNoun, &IsSubject};
-		vector<string> sublist(parseList.begin() + index, parseList.begin() + sizeof(compFunc)/sizeof(compFunc[0]) );
-		if(Expected(compFunc, sublist));
-		{
-			index += sizeof(compFunc)/sizeof(compFunc[0]);
+			//optional connector
+			//if (Expected(&IsConnector, parseList[index]))
+			{
+				index++;
+			}
+			//check the noun
+			bool (*compFunc[2])(tokentype) = {&IsNoun, &IsSubject};
+			sublist.assign(parseList.begin() + index, parseList.begin() + index + sizeof(compFunc) / sizeof(compFunc[0]));
+			if (isPart = Expected(compFunc, sublist))
+			{
+				index += sizeof(compFunc) / sizeof(compFunc[0]);
+			}
 		}
 
 
-		if(index + 1 < (signed)parseList.size() && IsVerb(type))
+
+		/*//Could do it this way i guess
+
+
+		sublist.clear();
+		sublist.assign(parseList.begin() + index, parseList.begin() + index + sizeof(rule1) / sizeof(rule1[0]));
+		if(Expected(rule1, sublist))
+		{
+			index += sizeof(rule1) / sizeof(rule1[0]);
+		}
+		/*
+		/*
+		if (isPart && index + 2 < (signed)parseList.size() &&
+				isPart = Expected(&IsVerb, parseList[index]))
 		{
 			//s2
+			index++;
+			if(isPart = Expected(&IsTense, parseList[index]))
+			{
+				index++;
+			}
+			s7();
 		}
-		else if(index + 1 < (signed)parseList.size() && IsNoun(type))
+		else if (isPart && index + 1 < (signed)parseList.size() &&
+				isPart = Expected(&IsNoun, parseList[index]))
 		{
 			//s3
+			index++;
+			if (IsBe(type))
+			{
+				//s4
+			}
+			else if (IsDestination(type))
+			{
+				//s5
+			}
 		}
 		else
 		{
@@ -199,81 +235,101 @@ bool Parse(vector<string> parseList)
 		isPart = Match(&IsTense, type);
 
 		//s3
-		if(IsBe(type))
-		{
-			//s4
-		}
-		else if(IsDestination(type))
-		{
-			//s5
-		}
+
 
 		//s7
 		isPart = IsVerb(type);
 		isPart = (type == PERIOD);
 
-		index++;
-	}
-	while(index < (signed)parseList.size() && valid);
+		index++;*/
+	} while (index < (signed) parseList.size() && valid);
 
-	return(valid);
+	return (valid);
 }
 
-//TODO maybe make it a vector of comparator functions and not an array
-/***********************************************************************
- * Expected
- * ---------------------------------------------------------
- * Expected takes 2 lists and compares whether the tokentypes of one list
- * are what they are supposed to be. If they are it returns true, otherwise
- * it returns false.
- * ---------------------------------------------------------
- * @param compFunc[] - Array of comparator functions
- * @param sublist 	 - List of strings to check
- * @return valid	 - If the strings tokentype are what they supposed to be
- ***********************************************************************/
+
 bool Expected(bool (*compFunc[])(tokentype), vector<string> sublist)
 {
-	//Scanner scanner;
 	bool valid = true;
-	tokentype type;
-	map<string, tokentype>::iterator iter;
 
+	//cout << "\nArray size in func " << sizeof(compFunc)/sizeof(compFunc[0]) << endl;
+
+	/*
 	//if the size of lists do not match
-	if( sublist.size() < ( sizeof(compFunc)/sizeof(compFunc[0]) ) )
+	if (sublist.size() != (sizeof(compFunc) / sizeof(compFunc[0])))
 	{
 		valid = false;
-	}
+		cout << "\nERROR: not matching sizes (" << sublist.size() << ":"
+		<< (sizeof(compFunc)/sizeof(compFunc[0])) << ")\n";
+	}*/
 
 	int index = 0;
-	while(valid && index < (signed)sublist.size())
+	while (valid && index < (signed) sublist.size())
 	{
-		//TODO modularize this
-		iter = lexicon.find(sublist[index]);
-		//if the word is not in the lexicon
-		if (iter == lexicon.end())
-		{
-			//call the scanner for its type
-			type = scanner.Scan(sublist[index]);
-			//insert it into the lexicon
-			lexicon.insert(pair<string, tokentype> (sublist[index], type));
-		}
-		//already inserted into lexicon look up its type
-		else
-		{
-			type = iter->second;
-		}
-
-		//match expected results
-		valid = Match(compFunc[index], type);
+		valid = Expected(compFunc[index], sublist[index]);
 
 		index++;
 	}
 	return valid;
 }
 
-bool Expected(bool (*compFunc)(tokentype), string compStr)
+bool Expected(vector<fptr> compFunc, vector<string> sublist)
 {
-	bool (*funcs[1])(tokentype) = {compFunc};
-	vector<string> list (1, compStr);
-	return Expected(funcs, list);
+	bool valid = true;
+
+	//if the size of lists do not match
+	if (sublist.size() != compFunc.size())
+	{
+		valid = false;
+		cout << "\nERROR: not matching sizes (" << compFunc.size() << ":"
+		<< sublist.size() << ")\n";
+	}
+
+	int index = 0;
+	while (valid && index < (signed) sublist.size())
+	{
+		valid = Expected(compFunc[index], sublist[index]);
+
+		index++;
+	}
+	return valid;
 }
+
+/***********************************************************************
+ * Expected
+ * ---------------------------------------------------------
+ * Expected takes a comparator function and a string. It looks up the
+ * the string in the symbol table and if it exists returns the type.
+ * Otherwise it performs a scan on the string and determines it type.
+ * Then it compares that type to the comparator functions and returns
+ * true or false.
+ * ---------------------------------------------------------
+ * @param compFunc   - comparator function
+ * @param compStr 	 - string to check
+ * @return valid	 - If the string's tokentype is what is expected
+ ***********************************************************************/
+bool Expected(fptr compFunc, string compStr)
+{
+	tokentype type;
+	map<string, tokentype>::iterator iter;
+
+	//TODO modularize this
+	iter = symbolTable.find(compStr);
+	//if the word is not in the lexicon
+	if (iter == symbolTable.end())
+	{
+		//call the scanner for its type
+		type = scanner.Scan(compStr);
+		//insert it into the lexicon
+		symbolTable.insert(pair<string, tokentype> (compStr, type));
+	}
+	//already inserted into lexicon look up its type
+	else
+	{
+		type = iter->second;
+	}
+
+	//match expected results
+	return Match(compFunc, type);
+}
+
