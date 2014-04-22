@@ -8,6 +8,9 @@ Scanner scanner;
 map<string, tokentype> symbolTable;
 typedef bool (*fptr)(tokentype);
 
+//vector< vector<fptr> > ruleList;
+
+
 /***********************************************************************
  * Parse
  * ------------------------------------
@@ -58,7 +61,7 @@ bool IsPeriod(tokentype type)
 
 bool IsVerb(tokentype type)
 {
-	return (type == VERB);
+	return (type == VERB || type == WORD2);
 }
 
 bool IsNoun(tokentype type)
@@ -76,9 +79,6 @@ bool IsTense(tokentype type)
 	return (type == VERBPAST || type == VERBPASTNEG || type == VERB || type
 			== VERBNEG);
 }
-
-
-
 
 int main()
 {
@@ -99,37 +99,77 @@ int main()
 	}
 	file.close();//Closes the input file
 	file.clear();
+
 	//tokentype type = VERBPASTNEG;
 	//int index = 0;
 	//bool (*compFunc)(tokentype) = &IsTense;
 
 	//array of function pointers
-	fptr compFuncTest[3] = {&IsNoun, &IsPeriod, &IsVerb};
-	vector<fptr> compFunc (compFuncTest, compFuncTest + sizeof(compFuncTest)/sizeof(compFuncTest[0]));
+	//fptr compFuncTest[3] = {&IsNoun, &IsPeriod, &IsVerb};
+	//vector<fptr> compFunc (compFuncTest, compFuncTest + sizeof(compFuncTest)/sizeof(compFuncTest[0]));
 
 
 	//example string list to test
 	vector<string> testList;
+	//mata rika wa masu mashita . rule 1 worked
+	/*
+	testList.push_back("mata");
 	testList.push_back("rika");
-	testList.push_back(".");
+	testList.push_back("wa");
 	testList.push_back("masu");
+	testList.push_back("mashita");
+	testList.push_back(".");
+*/
+
+	//mata rika wa rika deshita . rule 2 worked
+	/*
+	testList.push_back("mata");
+	testList.push_back("rika");
+	testList.push_back("wa");
+	testList.push_back("rika");
+	testList.push_back("deshita");
+	testList.push_back(".");
+*/
+	testList.push_back("mata");
+	testList.push_back("rika");
+	testList.push_back("wa");
+	testList.push_back("rika");
+	testList.push_back("deshita");
+	testList.push_back(".");
+	testList.push_back("mata");
+	testList.push_back("rika");
+	testList.push_back("wa");
+	testList.push_back("rika");
+	testList.push_back("ni");
+	testList.push_back("wanai");
+	testList.push_back("masendeshita");
+	testList.push_back(".");
+
 	//array of expected inputs
 	//tokentype type[3] = {CONNECTOR, WORD1, PERIOD};
 	//bool matches = Match(compFunc, index, type);
-	bool good2go = Expected(compFunc, testList);
-    /*
-	while(good2go && index < 3)
-	{
-		cout << "Index: " << index ;
-		//tests whether the input fits an expected input
-		good2go = Match(compFunc[index], type[index]);
-		cout << " Matches: " << good2go << endl;
-		index++;
-	}*/
+	//bool good2go = Expected(compFunc, testList);
+	bool good2go = Parse(testList);
+	/*
+	 while(good2go && index < 3)
+	 {
+	 cout << "Index: " << index ;
+	 //tests whether the input fits an expected input
+	 good2go = Match(compFunc[index], type[index]);
+	 cout << " Matches: " << good2go << endl;
+	 index++;
+	 }*/
 
-	cout << "Expected test: " << good2go;
-	bool g2g2 = Expected(&IsNoun, "rika");
-	cout << "\nExpected test 2: " << g2g2;
+	cout << "Expected test: " << good2go << endl;
+	//bool g2g2 = Expected(&IsNoun, "rika");
+	//cout << "\nExpected test 2: " << g2g2;
+
+	//output all the symbols
+	for (map<string, tokentype>::iterator it = symbolTable.begin(); it
+			!= symbolTable.end(); ++it)
+	{
+		cout <<  it->first << " " << scanner.TokenTypeStr(it->second) << endl;
+	}
 }
 
 /*
@@ -152,14 +192,27 @@ bool Parse(vector<string> parseList)
 	//int state = 0;
 	tokentype type;
 
-	/*
-	//vector<(*rule[])(tokentype)> ruleList;
-	bool (*rule1[3])(tokentype) = {&IsVerb, &IsTense, &IsPeriod};
-	bool (*rule2[3])(tokentype) = {&IsNoun, &IsBe, &IsPeriod};
-	bool (*rule3[5])(tokentype) = {&IsNoun, &IsDestination, &IsVerb, &IsTense, &IsPeriod};
-	bool (*rule4[5])(tokentype) = {&IsNoun, &IsObject, &IsVerb, &IsTense, &IsPeriod};
-	bool (*rule5[7])(tokentype) = {&IsNoun, &IsObject, &IsNoun, &IsDestination, &IsVerb, &IsTense, &IsPeriod};
-*/
+	vector<vector<fptr> > ruleList;
+	bool (*rule1[3])(tokentype) =
+	{	&IsVerb, &IsTense, &IsPeriod};
+	bool (*rule2[3])(tokentype) =
+	{	&IsNoun, &IsBe, &IsPeriod};
+	bool (*rule3[5])(tokentype) =
+	{	&IsNoun, &IsDestination, &IsVerb, &IsTense, &IsPeriod};
+	bool (*rule4[5])(tokentype) =
+	{	&IsNoun, &IsObject, &IsVerb, &IsTense, &IsPeriod};
+	bool (*rule5[7])(tokentype) =
+	{	&IsNoun, &IsObject, &IsNoun, &IsDestination, &IsVerb, &IsTense, &IsPeriod};
+	vector<fptr> v1(rule1, rule1 + sizeof(rule1) / sizeof(rule1[0]));
+	vector<fptr> v2(rule2, rule2 + sizeof(rule2) / sizeof(rule2[0]));
+	vector<fptr> v3(rule3, rule3 + sizeof(rule3) / sizeof(rule3[0]));
+	vector<fptr> v4(rule4, rule4 + sizeof(rule4) / sizeof(rule4[0]));
+	vector<fptr> v5(rule5, rule5 + sizeof(rule5) / sizeof(rule5[0]));
+	ruleList.push_back(v1);
+	ruleList.push_back(v2);
+	ruleList.push_back(v3);
+	ruleList.push_back(v4);
+	ruleList.push_back(v5);
 
 	if (parseList.empty())
 	{
@@ -169,99 +222,65 @@ bool Parse(vector<string> parseList)
 	vector<string> sublist;
 	do
 	{
-
+		valid = false;
 		//s1
 		if (isPart && index + 3 < (signed) parseList.size())
 		{
 			//optional connector
-			//if (Expected(&IsConnector, parseList[index]))
+			if (Expected(&IsConnector, parseList[index]))
 			{
 				index++;
 			}
 			//check the noun
-			bool (*compFunc[2])(tokentype) = {&IsNoun, &IsSubject};
-			sublist.assign(parseList.begin() + index, parseList.begin() + index + sizeof(compFunc) / sizeof(compFunc[0]));
+			bool (*compFunc[2])(tokentype) =
+			{	&IsNoun, &IsSubject};
+
+			sublist.assign(parseList.begin() + index, parseList.begin() + index
+					+ sizeof(compFunc) / sizeof(compFunc[0]));
+
 			if (isPart = Expected(compFunc, sublist))
 			{
 				index += sizeof(compFunc) / sizeof(compFunc[0]);
 			}
 		}
 
-
-
-		/*//Could do it this way i guess
-
-
-		sublist.clear();
-		sublist.assign(parseList.begin() + index, parseList.begin() + index + sizeof(rule1) / sizeof(rule1[0]));
-		if(Expected(rule1, sublist))
+		int i = 0;
+		while (isPart && !valid && i < (signed) ruleList.size())
 		{
-			index += sizeof(rule1) / sizeof(rule1[0]);
-		}
-		/*
-		/*
-		if (isPart && index + 2 < (signed)parseList.size() &&
-				isPart = Expected(&IsVerb, parseList[index]))
-		{
-			//s2
-			index++;
-			if(isPart = Expected(&IsTense, parseList[index]))
+			if (ruleList[i].size() + index <= parseList.size())
 			{
-				index++;
+				sublist.clear();
+				sublist.assign(parseList.begin() + index, parseList.begin()
+						+ index + ruleList[i].size());
+				if(valid = Expected(ruleList[i], sublist))
+				{
+					cout << "Rule #:" << i+1 << endl;
+					index += sublist.size();
+				}
 			}
-			s7();
-		}
-		else if (isPart && index + 1 < (signed)parseList.size() &&
-				isPart = Expected(&IsNoun, parseList[index]))
-		{
-			//s3
-			index++;
-			if (IsBe(type))
-			{
-				//s4
-			}
-			else if (IsDestination(type))
-			{
-				//s5
-			}
-		}
-		else
-		{
-			valid = false;
+			i++;
 		}
 
-		//s2
-		isPart = Match(&IsVerb, type);
-		isPart = Match(&IsTense, type);
-
-		//s3
-
-
-		//s7
-		isPart = IsVerb(type);
-		isPart = (type == PERIOD);
-
-		index++;*/
-	} while (index < (signed) parseList.size() && valid);
+	}
+	while (index < (signed) parseList.size() && valid);
 
 	return (valid);
 }
 
-
-bool Expected(bool (*compFunc[])(tokentype), vector<string> sublist)
+bool Expected(bool(*compFunc[])(tokentype), vector<string> sublist)
 {
 	bool valid = true;
 
 	//cout << "\nArray size in func " << sizeof(compFunc)/sizeof(compFunc[0]) << endl;
 
 	/*
-	//if the size of lists do not match
-	if (sublist.size() != (sizeof(compFunc) / sizeof(compFunc[0])))
-	{
-		valid = false;
-		cout << "\nERROR: not matching sizes (" << sublist.size() << ":"
-		<< (sizeof(compFunc)/sizeof(compFunc[0])) << ")\n";
-	}*/
+	 //if the size of lists do not match
+	 if (sublist.size() != (sizeof(compFunc) / sizeof(compFunc[0])))
+	 {
+	 valid = false;
+	 cout << "\nERROR: not matching sizes (" << sublist.size() << ":"
+	 << (sizeof(compFunc)/sizeof(compFunc[0])) << ")\n";
+	 }*/
 
 	int index = 0;
 	while (valid && index < (signed) sublist.size())
@@ -282,7 +301,7 @@ bool Expected(vector<fptr> compFunc, vector<string> sublist)
 	{
 		valid = false;
 		cout << "\nERROR: not matching sizes (" << compFunc.size() << ":"
-		<< sublist.size() << ")\n";
+				<< sublist.size() << ")\n";
 	}
 
 	int index = 0;
