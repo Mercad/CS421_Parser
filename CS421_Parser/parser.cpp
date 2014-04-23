@@ -8,8 +8,6 @@ Scanner scanner;
 map<string, tokentype> symbolTable;
 typedef bool (*fptr)(tokentype);
 
-//vector< vector<fptr> > ruleList;
-
 
 /***********************************************************************
  * Parse
@@ -22,6 +20,7 @@ bool Parse(vector<string> parseList);
 bool Expected(bool(*compFunc[])(tokentype), vector<string> sublist);
 bool Expected(bool(*compFunc)(tokentype), string compStr);
 bool Expected(vector<fptr> compFunc, vector<string> sublist);
+string FptrToString(fptr fp);
 
 /***********************************************************************
  * Match
@@ -82,10 +81,12 @@ bool IsTense(tokentype type)
 
 int main()
 {
+	string fileName;
 	string input;
 	string strType;
 	tokentype type;
 	fstream file;
+	vector<string> wordList;
 	file.open("reservedWords.txt");//Opens the file
 	if (file.is_open())//If the file is open
 	{
@@ -100,76 +101,37 @@ int main()
 	file.close();//Closes the input file
 	file.clear();
 
-	//tokentype type = VERBPASTNEG;
-	//int index = 0;
-	//bool (*compFunc)(tokentype) = &IsTense;
-
-	//array of function pointers
-	//fptr compFuncTest[3] = {&IsNoun, &IsPeriod, &IsVerb};
-	//vector<fptr> compFunc (compFuncTest, compFuncTest + sizeof(compFuncTest)/sizeof(compFuncTest[0]));
-
 
 	//example string list to test
-	vector<string> testList;
-	//mata rika wa masu mashita . rule 1 worked
-	/*
-	testList.push_back("mata");
-	testList.push_back("rika");
-	testList.push_back("wa");
-	testList.push_back("masu");
-	testList.push_back("mashita");
-	testList.push_back(".");
-*/
+	cout << "File Name: ";
+	cin >> fileName;
 
-	//mata rika wa rika deshita . rule 2 worked
-	/*
-	testList.push_back("mata");
-	testList.push_back("rika");
-	testList.push_back("wa");
-	testList.push_back("rika");
-	testList.push_back("deshita");
-	testList.push_back(".");
-*/
-	testList.push_back("mata");
-	testList.push_back("rika");
-	testList.push_back("wa");
-	testList.push_back("rika");
-	testList.push_back("deshita");
-	testList.push_back(".");
-	testList.push_back("mata");
-	testList.push_back("rika");
-	testList.push_back("wa");
-	testList.push_back("rika");
-	testList.push_back("ni");
-	testList.push_back("wanai");
-	testList.push_back("masendeshita");
-	testList.push_back(".");
+	file.open(fileName.c_str());
+	if(file.is_open())
+	{
+		while (!file.eof())//While the file is not empty
+		{
+			file >> input;
+			wordList.push_back(input);
+		}
+	}
+	file.close();
 
-	//array of expected inputs
-	//tokentype type[3] = {CONNECTOR, WORD1, PERIOD};
-	//bool matches = Match(compFunc, index, type);
-	//bool good2go = Expected(compFunc, testList);
-	bool good2go = Parse(testList);
-	/*
-	 while(good2go && index < 3)
-	 {
-	 cout << "Index: " << index ;
-	 //tests whether the input fits an expected input
-	 good2go = Match(compFunc[index], type[index]);
-	 cout << " Matches: " << good2go << endl;
-	 index++;
-	 }*/
+	bool good2go = Parse(wordList);
+	cout << "Is this story in my language?: " ;
+	 if(good2go)
+		 cout << "Yes!";
+	 else
+		 cout << "No :(";
+	 cout << endl;
 
-	cout << "Expected test: " << good2go << endl;
-	//bool g2g2 = Expected(&IsNoun, "rika");
-	//cout << "\nExpected test 2: " << g2g2;
-
-	//output all the symbols
+	 /*Output entire symbol table
 	for (map<string, tokentype>::iterator it = symbolTable.begin(); it
 			!= symbolTable.end(); ++it)
 	{
 		cout <<  it->first << " " << scanner.TokenTypeStr(it->second) << endl;
 	}
+	*/
 }
 
 /*
@@ -189,8 +151,6 @@ bool Parse(vector<string> parseList)
 	bool isPart = true;
 	//index in the parseList
 	int index = 0;
-	//int state = 0;
-	tokentype type;
 
 	vector<vector<fptr> > ruleList;
 	bool (*rule1[3])(tokentype) =
@@ -249,12 +209,12 @@ bool Parse(vector<string> parseList)
 		{
 			if (ruleList[i].size() + index <= parseList.size())
 			{
-				sublist.clear();
+				cout << "Testing Rule #" << i + 1 << " ";
 				sublist.assign(parseList.begin() + index, parseList.begin()
 						+ index + ruleList[i].size());
 				if(valid = Expected(ruleList[i], sublist))
 				{
-					cout << "Rule #:" << i+1 << endl;
+					cout << "Found Matching Rule" << endl;
 					index += sublist.size();
 				}
 			}
@@ -329,10 +289,10 @@ bool Expected(vector<fptr> compFunc, vector<string> sublist)
  ***********************************************************************/
 bool Expected(fptr compFunc, string compStr)
 {
+	bool valid = false;
 	tokentype type;
 	map<string, tokentype>::iterator iter;
 
-	//TODO modularize this
 	iter = symbolTable.find(compStr);
 	//if the word is not in the lexicon
 	if (iter == symbolTable.end())
@@ -349,6 +309,41 @@ bool Expected(fptr compFunc, string compStr)
 	}
 
 	//match expected results
-	return Match(compFunc, type);
+	if(Match(compFunc, type))
+	{
+		valid = true;
+	}
+	else
+	{
+		cout << "Expected: " << FptrToString(compFunc)
+			<< " but found " << compStr << endl;
+	}
+	return(valid);
+}
+
+string FptrToString(fptr fp)
+{
+	string rtrString;
+		if(fp == IsObject)
+			rtrString = "OBJECT";
+		else if(fp == IsDestination)
+			rtrString = "DESTINATION";
+		else if(fp == IsSubject)
+			rtrString = "SUBJECT";
+		else if(fp == IsConnector)
+			rtrString = "CONNECTOR";
+		else if(fp == IsPeriod)
+			rtrString = "PERIOD";
+		else if(fp == IsVerb)
+			rtrString = "VERB | WORD2";
+		else if(fp == IsNoun)
+			rtrString = "WORD1 | WORD2 | PRONOUN";
+		else if(fp == IsBe)
+			rtrString = "IS | WAS";
+		else if(fp == IsTense)
+			rtrString = "VERBPAST | VERBPASTNEG | VERB | VERBNEG";
+		else
+			rtrString = "Undefined";
+	return rtrString;
 }
 
