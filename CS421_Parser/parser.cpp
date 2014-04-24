@@ -28,7 +28,7 @@ string FptrToString(fptr fp);
  * @param compFunc(tokentype) - Allows us to pass a comparator function
  * @param type - tokentype we want to compare
  ***********************************************************************/
-bool Match(bool(*compFunc)(tokentype), tokentype type)
+bool Match(fptr ompFunc), tokentype type)
 {
 	return compFunc(type);
 }
@@ -60,7 +60,7 @@ bool IsPeriod(tokentype type)
 
 bool IsVerb(tokentype type)
 {
-	return (type == VERB || type == WORD2);
+	return (type == WORD2);
 }
 
 bool IsNoun(tokentype type)
@@ -187,7 +187,7 @@ bool Parse(vector<string> parseList)
 		if (isPart && index + 3 < (signed) parseList.size())
 		{
 			//optional connector
-			if (Expected(&IsConnector, parseList[index]))
+			if (IsConnector(parseList[index]))
 			{
 				index++;
 			}
