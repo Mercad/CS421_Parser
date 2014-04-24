@@ -28,7 +28,7 @@ string FptrToString(fptr fp);
  * @param compFunc(tokentype) - Allows us to pass a comparator function
  * @param type - tokentype we want to compare
  ***********************************************************************/
-bool Match(fptr ompFunc), tokentype type)
+bool Match(fptr compFunc), tokentype type)
 {
 	return compFunc(type);
 }
