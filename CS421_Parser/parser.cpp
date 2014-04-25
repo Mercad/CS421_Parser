@@ -125,23 +125,22 @@ int main()
 		 cout << "No :(";
 	 cout << endl;
 
-	 /*Output entire symbol table
+	/* //Output entire symbol table
 	for (map<string, tokentype>::iterator it = symbolTable.begin(); it
 			!= symbolTable.end(); ++it)
 	{
 		cout <<  it->first << " " << scanner.TokenTypeStr(it->second) << endl;
-	}
-	*/
+	}*/
 }
 
 /*
- * s1 ::= [CONNECTOR] <noun> SUBJECT (<s2> | <s3>)
- * s2 ::= <verb> <tense> <s7>
- * s3 ::= <noun> (<s4> | <s5> | <s6>)
- * s4 ::= <be> <s7>
- * s5 ::= DESTINATION <s2>
- * s6 ::= OBJECT (<s2> | <noun> <s5>)
- * s7 ::= PERIOD [s1]
+ * <story> 	::= <s> [<s>]
+ * <s> 		::= [CONNECTOR] <noun> SUBJECT (<s1> | <s2> | <s3> | <s4> | <s5>)
+ * <s1> 	::= <verb> <tense> PERIOD
+ * <s2>		::= <noun> <be> PERIOD
+ * <s3>		::= <noun> DESTINATION <verb> <tense> PERIOD
+ * <s4>		::= <noun> OBJECT <verb> <tense> PERIOD
+ * <s5>		::= <noun> OBJECT <noun> DESTINATION <verb> <tense> PERIOD
  */
 bool Parse(vector<string> parseList)
 {
@@ -153,41 +152,49 @@ bool Parse(vector<string> parseList)
 	int index = 0;
 
 	vector<vector<fptr> > ruleList;
-	bool (*rule1[3])(tokentype) =
+
+	//define each rule with a vector representing it
+	fptr s1[3] =
 	{	&IsVerb, &IsTense, &IsPeriod};
-	bool (*rule2[3])(tokentype) =
+	fptr s2[3] =
 	{	&IsNoun, &IsBe, &IsPeriod};
-	bool (*rule3[5])(tokentype) =
+	fptr s3[5] =
 	{	&IsNoun, &IsDestination, &IsVerb, &IsTense, &IsPeriod};
-	bool (*rule4[5])(tokentype) =
+	fptr s4[5] =
 	{	&IsNoun, &IsObject, &IsVerb, &IsTense, &IsPeriod};
-	bool (*rule5[7])(tokentype) =
+	fptr s5[7] =
 	{	&IsNoun, &IsObject, &IsNoun, &IsDestination, &IsVerb, &IsTense, &IsPeriod};
-	vector<fptr> v1(rule1, rule1 + sizeof(rule1) / sizeof(rule1[0]));
-	vector<fptr> v2(rule2, rule2 + sizeof(rule2) / sizeof(rule2[0]));
-	vector<fptr> v3(rule3, rule3 + sizeof(rule3) / sizeof(rule3[0]));
-	vector<fptr> v4(rule4, rule4 + sizeof(rule4) / sizeof(rule4[0]));
-	vector<fptr> v5(rule5, rule5 + sizeof(rule5) / sizeof(rule5[0]));
+	vector<fptr> v1(s1, s1 + sizeof(s1) / sizeof(s1[0]));
+	vector<fptr> v2(s2, s2 + sizeof(s2) / sizeof(s2[0]));
+	vector<fptr> v3(s3, s3 + sizeof(s3) / sizeof(s3[0]));
+	vector<fptr> v4(s4, s4 + sizeof(s4) / sizeof(s4[0]));
+	vector<fptr> v5(s5, s5 + sizeof(s5) / sizeof(s5[0]));
 	ruleList.push_back(v1);
 	ruleList.push_back(v2);
 	ruleList.push_back(v3);
 	ruleList.push_back(v4);
 	ruleList.push_back(v5);
 
+
 	if (parseList.empty())
 	{
+		cout << "ERROR: Nothing to parse\n" << endl;
 		return false;
 	}
 
 	vector<string> sublist;
+	//<story> 	::= <s> [<s>]
+	cout << "Processing: <story>\n";
 	do
 	{
 		valid = false;
-		//s1
+		//<s> 		::= [CONNECTOR] <noun> SUBJECT (<s1> | <s2> | <s3> | <s4> | <s5>)
+		cout << "Processing: <s>\n";
 		if (isPart && index + 3 < (signed) parseList.size())
 		{
 			//optional connector
-			if (IsConnector(parseList[index]))
+
+			if (Expected(&IsConnector, parseList[index]))
 			{
 				index++;
 			}
@@ -209,12 +216,11 @@ bool Parse(vector<string> parseList)
 		{
 			if (ruleList[i].size() + index <= parseList.size())
 			{
-				cout << "Testing Rule #" << i + 1 << " ";
+				cout << "Processing: <s" << i + 1 << ">\n";
 				sublist.assign(parseList.begin() + index, parseList.begin()
 						+ index + ruleList[i].size());
 				if(valid = Expected(ruleList[i], sublist))
 				{
-					cout << "Found Matching Rule" << endl;
 					index += sublist.size();
 				}
 			}
@@ -224,23 +230,13 @@ bool Parse(vector<string> parseList)
 	}
 	while (index < (signed) parseList.size() && valid);
 
+
 	return (valid);
 }
 
 bool Expected(bool(*compFunc[])(tokentype), vector<string> sublist)
 {
 	bool valid = true;
-
-	//cout << "\nArray size in func " << sizeof(compFunc)/sizeof(compFunc[0]) << endl;
-
-	/*
-	 //if the size of lists do not match
-	 if (sublist.size() != (sizeof(compFunc) / sizeof(compFunc[0])))
-	 {
-	 valid = false;
-	 cout << "\nERROR: not matching sizes (" << sublist.size() << ":"
-	 << (sizeof(compFunc)/sizeof(compFunc[0])) << ")\n";
-	 }*/
 
 	int index = 0;
 	while (valid && index < (signed) sublist.size())
@@ -269,8 +265,16 @@ bool Expected(vector<fptr> compFunc, vector<string> sublist)
 	{
 		valid = Expected(compFunc[index], sublist[index]);
 
+		/*
+		if(!valid)
+		{
+			cout << "Expected: " << FptrToString(compFunc[index])
+				<< " but found " << sublist[index] << endl;
+		}*/
 		index++;
 	}
+
+
 	return valid;
 }
 
@@ -289,7 +293,7 @@ bool Expected(vector<fptr> compFunc, vector<string> sublist)
  ***********************************************************************/
 bool Expected(fptr compFunc, string compStr)
 {
-	bool valid = false;
+	bool valid;
 	tokentype type;
 	map<string, tokentype>::iterator iter;
 
@@ -309,16 +313,17 @@ bool Expected(fptr compFunc, string compStr)
 	}
 
 	//match expected results
-	if(Match(compFunc, type))
+	if(valid = Match(compFunc, type))
 	{
-		valid = true;
+		cout << "Matched " << FptrToString(compFunc) << endl;
 	}
-	else
+	else if(compFunc != &IsConnector)
 	{
 		cout << "Expected: " << FptrToString(compFunc)
 			<< " but found " << compStr << endl;
 	}
-	return(valid);
+
+	return valid;
 }
 
 string FptrToString(fptr fp)
@@ -335,13 +340,13 @@ string FptrToString(fptr fp)
 		else if(fp == IsPeriod)
 			rtrString = "PERIOD";
 		else if(fp == IsVerb)
-			rtrString = "VERB | WORD2";
+			rtrString = "VERB";
 		else if(fp == IsNoun)
-			rtrString = "WORD1 | WORD2 | PRONOUN";
+			rtrString = "NOUN";
 		else if(fp == IsBe)
-			rtrString = "IS | WAS";
+			rtrString = "BE";
 		else if(fp == IsTense)
-			rtrString = "VERBPAST | VERBPASTNEG | VERB | VERBNEG";
+			rtrString = "TENSE";
 		else
 			rtrString = "Undefined";
 	return rtrString;
