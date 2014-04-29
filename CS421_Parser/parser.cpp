@@ -112,7 +112,14 @@ int main()
 		while (!file.eof())//While the file is not empty
 		{
 			file >> input;
-			wordList.push_back(input);
+			if(input.compare("eofm") != 0)
+			{
+				wordList.push_back(input);
+			}
+			else
+			{
+				break;
+			}
 		}
 	}
 	file.close();
