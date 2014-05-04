@@ -6,7 +6,10 @@ using namespace std;
 
 Scanner scanner;
 map<string, tokentype> symbolTable;
+map<string, string> lexicon;
 typedef bool (*fptr)(tokentype);
+string IR;
+string lastNoun;
 
 
 /***********************************************************************
@@ -21,6 +24,8 @@ bool Expected(bool(*compFunc[])(tokentype), vector<string> sublist);
 bool Expected(bool(*compFunc)(tokentype), string compStr);
 bool Expected(vector<fptr> compFunc, vector<string> sublist);
 string FptrToString(fptr fp);
+string Genereate(fptr fp, tokentype type, string jWord);
+string GetEWord(string jWord);
 
 /***********************************************************************
  * Match
@@ -96,6 +101,20 @@ int main()
 			file >> strType;//Read the type
 			type = scanner.StrToTokentype(strType);
 			symbolTable.insert(pair<string, tokentype> (input, type));
+
+		}
+	}
+	file.close();//Closes the input file
+	file.clear();
+
+	file.open("dictionary.txt");//Opens the file
+	if (file.is_open())//If the file is open
+	{
+		while (!file.eof())//While the file is not empty
+		{
+			file >> input;//Reads the string
+			file >> strType;//Read the type
+			lexicon.insert(pair<string, string> (input, strType));
 		}
 	}
 	file.close();//Closes the input file
@@ -121,23 +140,32 @@ int main()
 				break;
 			}
 		}
+
+		bool good2go = Parse(wordList);
+		cout << "Is this story in my language?: " ;
+		 if(good2go)
+			 cout << "Yes!";
+		 else
+			 cout << "No :(";
+		 cout << endl;
 	}
 	file.close();
 
-	bool good2go = Parse(wordList);
-	cout << "Is this story in my language?: " ;
-	 if(good2go)
-		 cout << "Yes!";
-	 else
-		 cout << "No :(";
-	 cout << endl;
 
-	/* //Output entire symbol table
+
+	/*//Output entire symbol table
 	for (map<string, tokentype>::iterator it = symbolTable.begin(); it
 			!= symbolTable.end(); ++it)
 	{
 		cout <<  it->first << " " << scanner.TokenTypeStr(it->second) << endl;
 	}*/
+
+	cout << "\nLEXICON:\n";
+	for (map<string, string>::iterator it = lexicon.begin(); it
+			!= lexicon.end(); ++it)
+	{
+		cout <<  it->first << " " << it->second << endl;
+	}
 }
 
 /*
@@ -219,6 +247,7 @@ bool Parse(vector<string> parseList)
 		}
 
 		int i = 0;
+		string tempIR = IR;
 		while (isPart && !valid && i < (signed) ruleList.size())
 		{
 			if (ruleList[i].size() + index <= parseList.size())
@@ -229,11 +258,20 @@ bool Parse(vector<string> parseList)
 				if(valid = Expected(ruleList[i], sublist))
 				{
 					index += sublist.size();
+					cout << endl << IR << endl;
+				}
+				else
+				{
+					IR = tempIR;
 				}
 			}
 			i++;
 		}
 
+		if(valid)
+		{
+			IR = "";
+		}
 	}
 	while (index < (signed) parseList.size() && valid);
 
@@ -312,6 +350,7 @@ bool Expected(fptr compFunc, string compStr)
 		type = scanner.Scan(compStr);
 		//insert it into the lexicon
 		symbolTable.insert(pair<string, tokentype> (compStr, type));
+		//lexicon.insert(pair<string, string>(compStr, ""));
 	}
 	//already inserted into lexicon look up its type
 	else
@@ -322,12 +361,17 @@ bool Expected(fptr compFunc, string compStr)
 	//match expected results
 	if(valid = Match(compFunc, type))
 	{
-		cout << "Matched " << FptrToString(compFunc) << endl;
+		//cout << "Matched " << FptrToString(compFunc) << endl;
+		string tempStr = Genereate(compFunc, type, compStr);
+		if(tempStr.compare("Undefined") != 0 && compFunc != IsNoun)
+		{
+			IR += tempStr + "\n";
+		}
 	}
 	else if(compFunc != &IsConnector)
 	{
-		cout << "Expected: " << FptrToString(compFunc)
-			<< " but found " << compStr << endl;
+		//cout << "Expected: " << FptrToString(compFunc)
+			//<< " but found " << compStr << " which is: " << scanner.TokenTypeStr(type) << endl;
 	}
 
 	return valid;
@@ -357,5 +401,50 @@ string FptrToString(fptr fp)
 		else
 			rtrString = "Undefined";
 	return rtrString;
+}
+
+string Genereate(fptr fp, tokentype type, string jWord)
+{
+	string rtrString;
+	if(fp == IsObject)
+		rtrString = "OBJECT: " + lastNoun;
+	else if(fp == IsNoun)
+	{
+		lastNoun = GetEWord(jWord);
+	}
+	else if(fp == IsDestination)
+		rtrString = "TO: " + lastNoun;
+	else if(fp == IsSubject)
+		rtrString = "ACTOR: " + lastNoun;
+	else if(fp == IsConnector)
+	{
+		rtrString = "CONNECTOR: " + GetEWord(jWord);
+	}
+	else if(fp == IsVerb)
+		rtrString = "ACTION: " + jWord;
+	else if(fp == IsBe)
+		rtrString = "DESCRIPTION: " + lastNoun + "\nTENSE: " + scanner.TokenTypeStr(type);
+	else if(fp == IsTense)
+		rtrString = "TENSE: " + scanner.TokenTypeStr(type);
+	else
+		rtrString = "Undefined";
+
+	return rtrString;
+}
+
+string GetEWord(string jWord)
+{
+	string rtrStr;
+	map<string, string>::iterator iter = lexicon.find(jWord);
+	if(iter == lexicon.end())
+	{
+		rtrStr = jWord;
+	}
+	else
+	{
+		rtrStr = iter->second;
+	}
+
+	return rtrStr;
 }
 

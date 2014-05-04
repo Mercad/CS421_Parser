@@ -51,7 +51,7 @@ tokentype Scanner::StrToTokentype(string str)
 	}
 	else if(str.compare("VERBNEG") == 0)
 	{
-		returnType = WORD1;
+		returnType = VERBNEG;
 	}
 	else if(str.compare("VERBPAST") == 0)
 	{
