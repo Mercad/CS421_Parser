@@ -243,7 +243,7 @@ bool Scanner::IsPeriod(string parseStr)
 //consonant-pair vowel | consonant-pair vowel n)^+
 //WORD DFA
 //State: No Bugs
-//By:Dennis Zheng
+//By:Dennis Zheng, Corey Paxton, Rowelle Jay Tiburcio
 bool Scanner::IsWord(string parseStr)
 {
 	bool isWord = true;//
