@@ -121,7 +121,7 @@ int main()
 	}
 	else
 	{
-		cout << "\nFile does not exist\n"
+		cout << "\nFile does not exist\n";
 	}
 	file.close();
 
