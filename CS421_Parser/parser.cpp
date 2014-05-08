@@ -344,7 +344,7 @@ bool Expected(fptr compFunc, string compStr)
 	//match expected results
 	if(valid = Match(compFunc, type))
 	{
-		//cout << "Matched " << FptrToString(compFunc) << endl;
+		cout << "Matched " << FptrToString(compFunc) << endl;
 		string tempStr = Genereate(compFunc, type, compStr);
 		if(tempStr.compare("Undefined") != 0 && compFunc != IsNoun)
 		{
@@ -353,8 +353,8 @@ bool Expected(fptr compFunc, string compStr)
 	}
 	else if(compFunc != &IsConnector)
 	{
-		//cout << "Expected: " << FptrToString(compFunc)
-			//<< " but found " << compStr << " which is: " << scanner.TokenTypeStr(type) << endl;
+		cout << "Expected: " << FptrToString(compFunc)
+	             << " but found " << compStr << " which is: " << scanner.TokenTypeStr(type) << endl;
 	}
 
 	return valid;
@@ -385,7 +385,18 @@ string FptrToString(fptr fp)
 			rtrString = "Undefined";
 	return rtrString;
 }
-
+/***********************************************************************
+ * Generate
+ * ---------------------------------------------------------
+ * Generate takes a rule, token type, and word.
+ * If it's a noun it will accept it and if anything
+ * else it will append it to the IR.'
+ *
+ * ---------------------------------------------------------
+ * @param fp     - function pointer
+ * @param type 	 - Token type, the type associated with the word
+ * @return rtrString - Returns a line of the IR
+ ***********************************************************************/
 string Genereate(fptr fp, tokentype type, string jWord)
 {
 	string rtrString;
@@ -414,6 +425,17 @@ string Genereate(fptr fp, tokentype type, string jWord)
 
 	return rtrString;
 }
+/***********************************************************************
+ * GetEWord
+ * ---------------------------------------------------------
+ * Checks the lexicon and sees if the english  equivalent word exist,
+ * and if it does return the english word, else it will return the
+ * japanese word 
+ *
+ * ---------------------------------------------------------
+ * @param jWord     - japanese word
+ * @return rtrString - Returns a line of the IR
+ ***********************************************************************/
 
 string GetEWord(string jWord)
 {
