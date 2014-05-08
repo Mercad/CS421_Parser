@@ -265,7 +265,7 @@ bool Parse(vector<string> parseList)
 				if(valid = Expected(ruleList[i], sublist))
 				{
 					index += sublist.size();
-					file << IR << endl;
+					file << IR << endl << endl;
 				}
 				else
 				{
