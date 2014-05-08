@@ -5,8 +5,6 @@
 using namespace std;
 
 Scanner scanner;
-map<string, tokentype> symbolTable;
-map<string, string> lexicon;
 typedef bool (*fptr)(tokentype);
 string IR;
 string lastNoun;
@@ -92,34 +90,6 @@ int main()
 	tokentype type;
 	fstream file;
 	vector<string> wordList;
-	file.open("reservedWords.txt");//Opens the file
-	if (file.is_open())//If the file is open
-	{
-		while (!file.eof())//While the file is not empty
-		{
-			file >> input;//Reads the string
-			file >> strType;//Read the type
-			type = scanner.StrToTokentype(strType);
-			symbolTable.insert(pair<string, tokentype> (input, type));
-
-		}
-	}
-	file.close();//Closes the input file
-	file.clear();
-
-	file.open("dictionary.txt");//Opens the file
-	if (file.is_open())//If the file is open
-	{
-		while (!file.eof())//While the file is not empty
-		{
-			file >> input;//Reads the string
-			file >> strType;//Read the type
-			lexicon.insert(pair<string, string> (input, strType));
-		}
-	}
-	file.close();//Closes the input file
-	file.clear();
-
 
 	//example string list to test
 	cout << "File Name: ";
@@ -149,6 +119,10 @@ int main()
 			 cout << "No :(";
 		 cout << endl;
 	}
+	else
+	{
+		cout << "\nFile does not exist\n"
+	}
 	file.close();
 
 
@@ -161,8 +135,8 @@ int main()
 	}*/
 
 	cout << "\nLEXICON:\n";
-	for (map<string, string>::iterator it = lexicon.begin(); it
-			!= lexicon.end(); ++it)
+	for (map<string, string>::iterator it = scanner.lexicon.begin(); it
+			!= scanner.lexicon.end(); ++it)
 	{
 		cout <<  it->first << " " << it->second << endl;
 	}
@@ -351,14 +325,14 @@ bool Expected(fptr compFunc, string compStr)
 	tokentype type;
 	map<string, tokentype>::iterator iter;
 
-	iter = symbolTable.find(compStr);
+	iter = scanner.symbolTable.find(compStr);
 	//if the word is not in the lexicon
-	if (iter == symbolTable.end())
+	if (iter == scanner.symbolTable.end())
 	{
 		//call the scanner for its type
 		type = scanner.Scan(compStr);
 		//insert it into the lexicon
-		symbolTable.insert(pair<string, tokentype> (compStr, type));
+		scanner.symbolTable.insert(pair<string, tokentype> (compStr, type));
 		//lexicon.insert(pair<string, string>(compStr, ""));
 	}
 	//already inserted into lexicon look up its type
@@ -444,8 +418,8 @@ string Genereate(fptr fp, tokentype type, string jWord)
 string GetEWord(string jWord)
 {
 	string rtrStr;
-	map<string, string>::iterator iter = lexicon.find(jWord);
-	if(iter == lexicon.end())
+	map<string, string>::iterator iter = scanner.lexicon.find(jWord);
+	if(iter == scanner.lexicon.end())
 	{
 		rtrStr = jWord;
 	}
