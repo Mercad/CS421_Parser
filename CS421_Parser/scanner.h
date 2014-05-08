@@ -33,6 +33,10 @@ public:
 
 Scanner::Scanner()
 {
+	string fileName;
+	string input;
+	string strType;
+	tokentype type;
 	fstream file;
 	
 	file.open("reservedWords.txt");//Opens the file
