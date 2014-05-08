@@ -211,11 +211,18 @@ bool Parse(vector<string> parseList)
 	ruleList.push_back(v5);
 
 
+
+
+
 	if (parseList.empty())
 	{
 		cout << "ERROR: Nothing to parse\n" << endl;
 		return false;
 	}
+
+
+	fstream file;
+	file.open("translated.txt");//Opens the file
 
 	vector<string> sublist;
 	//<story> 	::= <s> [<s>]
@@ -258,7 +265,7 @@ bool Parse(vector<string> parseList)
 				if(valid = Expected(ruleList[i], sublist))
 				{
 					index += sublist.size();
-					cout << endl << IR << endl;
+					file << IR << endl;
 				}
 				else
 				{
@@ -275,6 +282,8 @@ bool Parse(vector<string> parseList)
 	}
 	while (index < (signed) parseList.size() && valid);
 
+	file.close();//Closes the input file
+	file.clear();
 
 	return (valid);
 }
