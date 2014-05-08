@@ -46,7 +46,7 @@ Scanner::Scanner()
 		{
 			file >> input;//Reads the string
 			file >> strType;//Read the type
-			type = scanner.StrToTokentype(strType);
+			type = StrToTokentype(strType);
 			symbolTable.insert(pair<string, tokentype> (input, type));
 
 		}
