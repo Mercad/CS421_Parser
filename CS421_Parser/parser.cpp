@@ -196,7 +196,7 @@ bool Parse(vector<string> parseList)
 
 
 	fstream file;
-	file.open("translated.txt");//Opens the file
+	file.open("translated.txt", ios::out);//Opens the file
 
 	vector<string> sublist;
 	//<story> 	::= <s> [<s>]
