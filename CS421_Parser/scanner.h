@@ -19,13 +19,50 @@ typedef enum tokentype
 class Scanner
 {
 public:
+	Scanner();
 	tokentype StrToTokentype(string str);
 	bool IsWord(string parseStr);
 	bool IsPeriod(string parseStr);
 	string TokenTypeStr(tokentype t);
 	tokentype Scan(string s);
 	tokentype WordType(string parsedStr);
+	
+	map<string, string> lexicon;
+	map<string, tokentype> symbolTable;
 };
+
+Scanner::Scanner()
+{
+	fstream file;
+	
+	file.open("reservedWords.txt");//Opens the file
+	if (file.is_open())//If the file is open
+	{
+		while (!file.eof())//While the file is not empty
+		{
+			file >> input;//Reads the string
+			file >> strType;//Read the type
+			type = scanner.StrToTokentype(strType);
+			symbolTable.insert(pair<string, tokentype> (input, type));
+
+		}
+	}
+	file.close();//Closes the input file
+	file.clear();
+
+	file.open("dictionary.txt");//Opens the file
+	if (file.is_open())//If the file is open
+	{
+		while (!file.eof())//While the file is not empty
+		{
+			file >> input;//Reads the string
+			file >> strType;//Read the type
+			lexicon.insert(pair<string, string> (input, strType));
+		}
+	}
+	file.close();//Closes the input file
+	file.clear();
+}
 
 
 //State: No Bugs
