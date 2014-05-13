@@ -101,7 +101,7 @@ int main()
 	input = toupper(input);
 	if(input.compare("YES") == 0 || input.compare("Y") == 0)
 	{	
-		trace = false;
+		tracer = false;
 	}
 
 		file.open(fileName.c_str());
@@ -487,7 +487,7 @@ string GetEWord(string jWord)
 
 void Trace(string output)
 {
-	if(trace)
+	if(tracer)
 	{
 		cout << output;
 	}
