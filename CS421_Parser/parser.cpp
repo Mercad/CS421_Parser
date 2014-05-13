@@ -8,6 +8,7 @@ Scanner scanner;
 typedef bool (*fptr)(tokentype);
 string IR;
 string lastNoun;
+bool tracer = true;
 
 
 /***********************************************************************
@@ -94,6 +95,14 @@ int main()
 	cout << "File Name: ";
 	cin >> fileName;
 
+	cout << "Would you like to disable the Trace?: "
+	cin >> input;
+
+	input = toupper(input);
+	if(input.compare("YES") == 0 || input.compare("Y") == 0)
+	{	
+		trace = false;
+	}
 
 		file.open(fileName.c_str());
 		if(file.is_open())
@@ -136,11 +145,11 @@ int main()
 		cout <<  it->first << " " << scanner.TokenTypeStr(it->second) << endl;
 	}*/
 
-	cout << "\nLEXICON:\n";
+	Trace("\nLEXICON:\n");
 	for (map<string, string>::iterator it = scanner.lexicon.begin(); it
 			!= scanner.lexicon.end(); ++it)
 	{
-		cout <<  it->first << " " << it->second << endl;
+		Trace(it->first + " " + it->second + "\n");
 	}
 }
 
@@ -153,6 +162,9 @@ int main()
  * <s4>		::= <noun> OBJECT <verb> <tense> PERIOD
  * <s5>		::= <noun> OBJECT <noun> DESTINATION <verb> <tense> PERIOD
  */
+//State: No Bugs
+
+//By:Corey Paxton, Dennis Zheng, Rowelle Jay Tiburcio
 bool Parse(vector<string> parseList)
 {
 	//expresses whether or not you have a sentence
@@ -202,13 +214,13 @@ bool Parse(vector<string> parseList)
 
 	vector<string> sublist;
 	//<story> 	::= <s> [<s>]
-	cout << "Processing: <story>\n";
+	Trace("Processing: <story>\n");
 	do
 	{
 		IR = "";
 		valid = false;
 		//<s> 		::= [CONNECTOR] <noun> SUBJECT (<s1> | <s2> | <s3> | <s4> | <s5>)
-		cout << "Processing: <s>\n";
+		Trace("Processing: <s>\n");
 		if (isPart && index + 3 < (signed) parseList.size())
 		{
 			//optional connector
@@ -243,7 +255,7 @@ bool Parse(vector<string> parseList)
 				//make sure that the buffer contains enough words to compare
 				if (ruleList[i].size() + index <= parseList.size())
 				{
-					cout << "Processing: <s" << i + 1 << ">\n";
+					Trace("Processing: <s" + (i + 1) ">\n";
 
 					//partition the sublist from index to size of the rule set
 					sublist.assign(parseList.begin() + index, parseList.begin()
@@ -309,8 +321,7 @@ bool Expected(vector<fptr> compFunc, vector<string> sublist)
 		/*
 		if(!valid)
 		{
-			cout << "Expected: " << FptrToString(compFunc[index])
-				<< " but found " << sublist[index] << endl;
+			Trace("Expected: " + FptrToString(compFunc[index]) + " but found " + sublist[index] + "\n");
 		}*/
 		index++;
 	}
@@ -332,6 +343,9 @@ bool Expected(vector<fptr> compFunc, vector<string> sublist)
  * @param compStr 	 - string to check
  * @return valid	 - If the string's tokentype is what is expected
  ***********************************************************************/
+//State: No Bugs
+
+//By:Corey Paxton, Dennis Zheng, Rowelle Jay Tiburcio
 bool Expected(fptr compFunc, string compStr)
 {
 	bool valid;
@@ -357,7 +371,7 @@ bool Expected(fptr compFunc, string compStr)
 	//match expected results
 	if(valid = Match(compFunc, type))
 	{
-		cout << "Matched " << FptrToString(compFunc) << endl;
+		Trace("Matched " + FptrToString(compFunc) + "\n");
 		string tempStr = Genereate(compFunc, type, compStr);
 		if(tempStr.compare("Undefined") != 0 && compFunc != IsNoun)
 		{
@@ -366,8 +380,8 @@ bool Expected(fptr compFunc, string compStr)
 	}
 	else if(compFunc != &IsConnector)
 	{
-		cout << "Expected: " << FptrToString(compFunc)
-	             << " but found " << compStr << " which is: " << scanner.TokenTypeStr(type) << endl;
+		Trace("Expected: " + FptrToString(compFunc)
+	             + " but found " + compStr + " which is: " + scanner.TokenTypeStr(type) + "\n");
 	}
 
 	return valid;
@@ -410,6 +424,9 @@ string FptrToString(fptr fp)
  * @param type 	 - Token type, the type associated with the word
  * @return rtrString - Returns a line of the IR
  ***********************************************************************/
+//State: No Bugs
+
+//By:Corey Paxton, Dennis Zheng, Rowelle Jay Tiburcio
 string Genereate(fptr fp, tokentype type, string jWord)
 {
 	string rtrString;
@@ -449,7 +466,9 @@ string Genereate(fptr fp, tokentype type, string jWord)
  * @param jWord     - japanese word
  * @return rtrString - Returns a line of the IR
  ***********************************************************************/
+//State: No Bugs
 
+//By:Corey Paxton, Dennis Zheng, Rowelle Jay Tiburcio
 string GetEWord(string jWord)
 {
 	string rtrStr;
@@ -464,5 +483,13 @@ string GetEWord(string jWord)
 	}
 
 	return rtrStr;
+}
+
+void Trace(string output)
+{
+	if(trace)
+	{
+		cout << output;
+	}
 }
 
