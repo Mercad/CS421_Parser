@@ -25,6 +25,7 @@ bool Expected(vector<fptr> compFunc, vector<string> sublist);
 string FptrToString(fptr fp);
 string Genereate(fptr fp, tokentype type, string jWord);
 string GetEWord(string jWord);
+void Trace(string output);
 
 /***********************************************************************
  * Match
@@ -98,7 +99,7 @@ int main()
 	cout << "Would you like to disable the Trace?: "
 	cin >> input;
 
-	input = toupper(input);
+	//input = toupper(input);
 	if(input.compare("YES") == 0 || input.compare("Y") == 0)
 	{	
 		tracer = false;
@@ -492,4 +493,3 @@ void Trace(string output)
 		cout << output;
 	}
 }
-
