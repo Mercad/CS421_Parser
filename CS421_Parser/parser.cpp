@@ -87,7 +87,6 @@ int main()
 	string fileName;
 	string input;
 	string strType;
-	tokentype type;
 	fstream file;
 	vector<string> wordList;
 
@@ -95,35 +94,38 @@ int main()
 	cout << "File Name: ";
 	cin >> fileName;
 
-	file.open(fileName.c_str());
-	if(file.is_open())
-	{
-		while (!file.eof())//While the file is not empty
-		{
-			file >> input;
-			if(input.compare("eofm") != 0)
-			{
-				wordList.push_back(input);
-			}
-			else
-			{
-				break;
-			}
-		}
 
-		bool good2go = Parse(wordList);
-		cout << "Is this story in my language?: " ;
-		 if(good2go)
-			 cout << "Yes!";
-		 else
-			 cout << "No :(";
-		 cout << endl;
-	}
-	else
-	{
-		cout << "\nFile does not exist\n";
-	}
-	file.close();
+		file.open(fileName.c_str());
+		if(file.is_open())
+		{
+			while (!file.eof())//While the file is not empty
+			{
+				file >> input;
+				if(input.compare("eofm") != 0)
+				{
+					wordList.push_back(input);
+				}
+				else
+				{
+					break;
+				}
+			}
+
+
+			bool good2go = Parse(wordList);
+			cout << "Is this story in my language?: " ;
+			 if(good2go)
+				 cout << "Yes!";
+			 else
+				 cout << "No :(";
+			 cout << endl;
+		}
+		else
+		{
+			cout << "\nFile does not exist\n";
+		}
+		file.close();
+
 
 
 
@@ -203,13 +205,13 @@ bool Parse(vector<string> parseList)
 	cout << "Processing: <story>\n";
 	do
 	{
+		IR = "";
 		valid = false;
 		//<s> 		::= [CONNECTOR] <noun> SUBJECT (<s1> | <s2> | <s3> | <s4> | <s5>)
 		cout << "Processing: <s>\n";
 		if (isPart && index + 3 < (signed) parseList.size())
 		{
 			//optional connector
-
 			if (Expected(&IsConnector, parseList[index]))
 			{
 				index++;
@@ -229,29 +231,40 @@ bool Parse(vector<string> parseList)
 
 		int i = 0;
 		string tempIR = IR;
-		while (isPart && !valid && i < (signed) ruleList.size())
-		{
-			if (ruleList[i].size() + index <= parseList.size())
-			{
-				cout << "Processing: <s" << i + 1 << ">\n";
-				sublist.assign(parseList.begin() + index, parseList.begin()
-						+ index + ruleList[i].size());
-				if(valid = Expected(ruleList[i], sublist))
-				{
-					index += sublist.size();
-					file << IR << endl << endl;
-				}
-				else
-				{
-					IR = tempIR;
-				}
-			}
-			i++;
-		}
 
-		if(valid)
+		//check each set of rules and try to match a valid rule set
+
+		//if the first rule was true
+		if(isPart)
 		{
-			IR = "";
+			//while it is not part of a ruleset and there are possible rule sets left
+			while ( !valid && i < (signed) ruleList.size())
+			{
+				//make sure that the buffer contains enough words to compare
+				if (ruleList[i].size() + index <= parseList.size())
+				{
+					cout << "Processing: <s" << i + 1 << ">\n";
+
+					//partition the sublist from index to size of the rule set
+					sublist.assign(parseList.begin() + index, parseList.begin()
+							+ index + ruleList[i].size());
+
+					//check the rule set against the sublist
+					if(valid = Expected(ruleList[i], sublist))
+					{
+						//if they match increase the current position of our buffer count
+						index += sublist.size();
+						//output the IR to the file
+						file << IR << endl << endl;
+					}
+					else
+					{
+						//otherwise reset the IR
+						IR = tempIR;
+					}
+				}
+				i++;
+			}
 		}
 	}
 	while (index < (signed) parseList.size() && valid);
@@ -430,7 +443,7 @@ string Genereate(fptr fp, tokentype type, string jWord)
  * ---------------------------------------------------------
  * Checks the lexicon and sees if the english  equivalent word exist,
  * and if it does return the english word, else it will return the
- * japanese word 
+ * japanese word
  *
  * ---------------------------------------------------------
  * @param jWord     - japanese word
